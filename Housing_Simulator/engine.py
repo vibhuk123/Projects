@@ -24,7 +24,7 @@ def calculate_piti(buyer: BuyerProfile, market: MarketConditions, property: Prop
     monthly_insurance = (property.price * market.annual_insurance_rate) / 12
 
     # Private mortgage insurance
-    down_payment_percent = buyer.down_payment / property.price
+    down_payment_percent = (buyer.down_payment / property.price if property.price > 0 else 0.0)
     if down_payment_percent < 0.2 and loan_amount > 0:
         monthly_pmi = (loan_amount * market.pmi_rate) / 12
     else:
@@ -59,7 +59,7 @@ def get_max_housing_budget(buyer: BuyerProfile, market: MarketConditions) -> tup
     if front_end_housing_cap < back_end_housing_cap:
         max_piti_budget = front_end_housing_cap
         limiting_factor = 'Front-End DTI Limit'
-    elif back_end_housing_cap < front_end_housing_cap:
+    else:
         max_piti_budget = back_end_housing_cap
         limiting_factor = 'Back-End DTI Limit'
 
@@ -81,4 +81,22 @@ def calculate_max_affordability(buyer: BuyerProfile, market: MarketConditions) -
         midpoint = (low + high) / 2
         test_property = Property(midpoint)
         test_calculation = calculate_piti(buyer, market, test_property)
-        
+        if test_calculation['piti'] > max_piti_budget:
+            high = midpoint
+        else:
+            low = midpoint
+
+    property = Property(low)
+    calculation = calculate_piti(buyer, market, property)
+
+    return AffordabilityResult(
+        max_affordable_price=low,
+        max_monthly_piti=calculation['piti'],
+        monthly_principal_interest=calculation['pi'],
+        monthly_property_tax=calculation['tax'],
+        monthly_insurance=calculation['insurance'],
+        monthly_pmi=calculation['pmi'],
+        actual_front_end_dti=calculation['fdti'],
+        actual_back_end_dti=calculation['bdti'],
+        limiting_factor=limiting_factor
+    )
