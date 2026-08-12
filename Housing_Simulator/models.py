@@ -81,5 +81,5 @@ class AffordabilityResult:
     monthly_insurance: float
     monthly_pmi: float
     actual_front_end_dti: float
-    actual_back_end_dit: float
+    actual_back_end_dti: float
     limiting_factor: str
